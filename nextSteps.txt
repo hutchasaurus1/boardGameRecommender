@@ -1,0 +1,7 @@
+1. Launch EC2/S3 on AWS and start transferring files
+2. Subset data, run parsing scripts, ensure relevant data
+3. Data exploration on subset, clean data
+4. Build features and ratings matrix. Begin modeling
+5. Explore recommenders/Turi. What is an abstract recommendation system.
+6. Tune/test the model
+7. Clean code, make deployable on AWS
