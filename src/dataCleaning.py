@@ -140,5 +140,5 @@ def getListIfNotNull(searchObject):
 	return '' if searchObject == None else [x['value'] for x in searchObject]
 
 if __name__ == '__main__':
-	# formatUserDataParallel()
-	formatGameDataParallel(limit=100)
+	formatUserDataParallel()
+	formatGameDataParallel()
