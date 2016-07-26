@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import multiprocessing
 from functools import partial
 import time
+import math
 
 # Functions to get board game ids
 def getBoardGameIds():
@@ -116,31 +117,29 @@ def getBoardGamesMetaData():
 	client = MongoClient()
 	db = client['boardGameGeek']
 	boardGames = db['boardGames']
-	boardGameData = db['boardGameData']
+	metaData = db['boardGameMetaData']
 	boardGameIds = boardGames.distinct('id')
-	boardGameDataIds = set(boardGameData.distinct('id'))
+	boardGameDataIds = set(metaData.distinct('id'))
 	boardGameIds = [boardGameId for boardGameId in boardGameIds if boardGameId not in boardGameDataIds]
-	iterable = enumerate(boardGameIds)
+	l = len(boardGameIds)
 
-	# Set up parallel processing to get all of the meta game data
-	pool = multiprocessing.Pool(processes=4)
-	outputs = pool.map(func=getBoardGameMetaData, iterable=iterable)
+	for i in range(int(math.ceil(l / 100))):
+		time.sleep(5)
+		boardGameIdsString = ','.join(boardGameIds[i * 100: min(l - 1,(i + 1) * 100)])
+		getBoardGameMetaData(boardGameIdsString, metaData)
 
-def getBoardGameMetaData(boardGameId):
-	print boardGameId
-	url = 'http://www.boardgamegeek.com/boardgame/' + boardGameId[1]
+def getBoardGameMetaData(boardGameIds, metaData):
+	url = 'http://www.boardgamegeek.com/xmlapi2/thing?id=' + boardGameIds + '&stats=1'
 	r = requests.get(url)
 	if r.status_code == 200:
-		html = r.content
-		saveBoardGameMetaData(boardGameId[1], html)
+		xml = r.content
+		soup = BeautifulSoup(xml, 'xml')
+		boardGames = soup.find_all('item')
+		for boardGame in boardGames:
+			print boardGame['id']
+			metaData.insert_one({'id': boardGame['id'], 'xml': str(boardGame)})
 	else:
 		print r.status_code
-
-def saveBoardGameMetaData(boardGameId, html):
-	client = MongoClient()
-	db = client['boardGameGeek']
-	boardGameData = db['boardGameData']
-	db.boardGameData.insert({'id': boardGameId, 'html': html})
 
 if __name__ == '__main__':
 	getBoardGamesMetaData()
