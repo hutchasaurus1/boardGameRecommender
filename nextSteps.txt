@@ -16,13 +16,24 @@
 		-Run scripts on all board games and subset of users
 3. Data exploration on subset, clean data
 	Completed:
-	To Do:
 		-Build user game ratings sparse matrix
+	To Do:
 4. Begin modeling
 	Completed:
-	To Do:
-		-Explore recommenders/Turi. What is an abstract recommendation system.
 		-Test Dato's model with various features
-		-Find features that lead to the best predictions
+5. Research various recommendation systems and start cross validation
+	Completed:
+		-How is SVD used? Are there ways to improve on it?
+		-What is specatral clustering? Can I use it?
+		-Read Crab documentation
+		-Read netflix recommender
+		-https://code.google.com/archive/p/pysuggest/
+		-https://github.com/ocelma/python-recsys
+		-Read turi documnetation
+
 6. Tune/test the model
+	To Do:
+		-Find features that lead to the best predictions
+		-Run grid search to find best model parameters
+		-Current best RMSE on test data is 1.64
 7. Clean code, make deployable on AWS

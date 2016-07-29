@@ -65,7 +65,7 @@ def formatGameDataParallel(limit=False):
 	Loops through all games in 'boardGameData' table
 	Parses content included in xml content.
 	Information columns:
-		id, name, description, yearPublished, minPlayers, maxPlayers,
+		id, name, description, yearPublished, minPlayers, maxPlayers, mecahnics,
 		playtime, minPlaytime, maxPlaytime, minAge, categories, families, expansions,
 		designers, artists, publishers, avgRating, bayesAverage, rank
 	'''
@@ -98,6 +98,7 @@ def formatBoardGameData(boardGameData):
 	maxPlaytime = getValueIfNotNull(soup.find('maxplaytime'))
 	minAge = getValueIfNotNull(soup.find('minage'))
 	categories = getListIfNotNull(soup.find_all('link', type='boardgamecategory'))
+	mechanics = getListIfNotNull(soup.find_all('link', type='boardgamemechanic'))
 	families = getListIfNotNull(soup.find_all('link', type='boardgamefamily'))
 	expansions = getListIfNotNull(soup.find_all('link', type='boardgameexpansion'))
 	designers = getListIfNotNull(soup.find_all('link', type='boardgamedesigner'))
@@ -123,6 +124,7 @@ def formatBoardGameData(boardGameData):
 		'maxPlaytime': maxPlaytime,
 		'minAge': minAge,
 		'categories': categories,
+		'mechanics': mechanics,
 		'families': families,
 		'expansions': expansions,
 		'designers': designers,
@@ -140,5 +142,5 @@ def getListIfNotNull(searchObject):
 	return '' if searchObject == None else [x['value'] for x in searchObject]
 
 if __name__ == '__main__':
-	formatUserDataParallel()
+	# formatUserDataParallel()
 	formatGameDataParallel()
