@@ -98,16 +98,40 @@ def getUserData(username):
 	r = requests.get(url)
 	if r.status_code == 200:
 		html = r.content
-		saveUserData(username[1], html)
+		formatAndSaveUserData(username[1], html)
 	else:
 		print r.status_code
 
-
-def saveUserData(username, html):
+def formatAndSaveUserData(username, html):
+	'''
+	Format the html before saving it in the database
+	'''
+	soup = BeautifulSoup(html, 'html.parser')
 	client = MongoClient()
 	db = client['boardGameGeek']
-	userData = db['userData']
-	db.userData.insert({'username': username, 'html': html})
+	table = db['userData']
+
+	rows = soup.select('table.collection_table tr')
+	for row in rows:
+		tds = row.find_all('td')
+		if len(tds) > 0:
+			boardGameLink = '' if tds[0].find('a') == None else tds[0].find('a')['href'].split('/')
+			boardGameId = boardGameLink[2] if boardGameLink != '' else ''
+			boardGameName = boardGameLink[3] if boardGameLink != '' else ''
+			ratingText = row.find('div', class_='ratingtext')
+			rating = 0 if ratingText == None else float(ratingText.get_text())
+			owned = 0 if row.find('div', class_='owned') == None else 1
+			commentText = row.find('td', class_='collection_comment')
+			comment = '' if commentText == None else commentText.get_text()
+			if rating != 0:
+				table.insert_one({
+					'username': username, 
+					'boardGameId': boardGameId, 
+					'boardGameName': boardGameName, 
+					'rating': rating, 
+					'owned': owned, 
+					'comment': comment
+				})
 
 def getBoardGamesMetaData():
 	'''
@@ -142,8 +166,8 @@ def getBoardGameMetaData(boardGameIds, metaData):
 		print r.status_code
 
 if __name__ == '__main__':
-	getBoardGameIds()
-	getUsernames()
+	# getBoardGameIds()
+	# getUsernames()
 	getUsersData()
-	getBoardGamesMetaData()
+	# getBoardGamesMetaData()
 

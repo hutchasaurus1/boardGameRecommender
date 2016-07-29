@@ -17,7 +17,7 @@ def buildUserRatingsSFrame():
 	'''
 	client = MongoClient()
 	db = client['boardGameGeek']
-	table = db['formattedUserGameData']
+	table = db['userData']
 
 	df = pd.DataFrame(list(table.find()))
 	columns = ['boardGameId','username','rating']
