@@ -73,7 +73,7 @@ def saveUsernames(usernames):
 	for username in usernames:
 		db.users.insert({'username': username})
 
-def getUsersData():
+def getUserDataParallel():
 	'''
 	Gets the game ratings from each user based on username
 	'''
@@ -133,7 +133,7 @@ def formatAndSaveUserData(username, html):
 					'comment': comment
 				})
 
-def getBoardGamesMetaData():
+def getBoardGamesDataParallel():
 	'''
 	Get the board game meta data for each game based on game id
 	'''
@@ -150,9 +150,9 @@ def getBoardGamesMetaData():
 	for i in range(int(math.ceil(l / 100))):
 		time.sleep(5)
 		boardGameIdsString = ','.join(boardGameIds[i * 100: min(l - 1,(i + 1) * 100)])
-		getBoardGameMetaData(boardGameIdsString, metaData)
+		getBoardGameData(boardGameIdsString, metaData)
 
-def getBoardGameMetaData(boardGameIds, metaData):
+def getBoardGameData(boardGameIds, metaData):
 	url = 'http://www.boardgamegeek.com/xmlapi2/thing?id=' + boardGameIds + '&stats=1'
 	r = requests.get(url)
 	if r.status_code == 200:
@@ -166,8 +166,8 @@ def getBoardGameMetaData(boardGameIds, metaData):
 		print r.status_code
 
 if __name__ == '__main__':
-	# getBoardGameIds()
-	# getUsernames()
-	getUsersData()
-	# getBoardGamesMetaData()
+	getBoardGameIds()
+	getUsernames()
+	getUserDataParallel()
+	getBoardGamesDataParallel()
 
