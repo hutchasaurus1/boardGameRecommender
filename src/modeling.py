@@ -21,5 +21,17 @@ def pickleModel(model):
 	with open("model.pkl") as f:
 		pickle.dump(model, f)
 
+def getRecommendations(model, username):
+	recs = model.recommend([username])
+	recs = list(recs['boardGameId'])
+	recs_list = boardGames.find({'id': {'$in': recs}})
+
+	ranked_recs_with_name =  []
+	for rec in recs_list:
+		rec['rank'] = recs.index(rec['id']) + 1
+		ranked_recs_with_name.append([rec['id'], rec['name'], rec['rank']])
+
+	return ranked_recs_with_name
+
 if __name__ == '__main__':
 	pass

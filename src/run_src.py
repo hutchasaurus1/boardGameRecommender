@@ -1,8 +1,8 @@
 '''
 This file runs all relevant functions in src to gather the data, create the model, and start the web app
 '''
-from src.gatherData import getBoardGameIds, getUsernames, getUsersData, getBoardGamesMetaData
-from src.dataCleaning import formatUserDataParallel, formatGameDataParallel
+from src.gatherData import getBoardGameIds, getUsernames, getUserDataParallel, getBoardGamesDataParallel
+from src.dataCleaning import formatGameDataParallel
 from src.dataHygiene import buildGameFeatureDF, generateExpansions, buildUserRatingsSFrame
 from src.modeling import buildFactrizationModel, pickleModel
 
@@ -10,8 +10,8 @@ if __name__ == '__main__':
 	# Gather and clean the data
 	getBoardGameIds()
 	getUsernames()
-	getUsersData()
-	getBoardGamesMetaData()
+	getUserDataParallel()
+	getBoardGamesDataParallel()
 	formatGameDataParallel()
 
 	# Prepare the data for the model

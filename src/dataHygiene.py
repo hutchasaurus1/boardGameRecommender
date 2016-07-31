@@ -7,6 +7,7 @@ from pymongo import MongoClient
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.cross_validation import train_test_split
+import graphlab
 
 def splitListsIntoDummyColumns(df, column):
 	# Get set of unique values in column
