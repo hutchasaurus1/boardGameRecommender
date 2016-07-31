@@ -6,6 +6,7 @@ import pandas as pd
 from pymongo import MongoClient
 import numpy as np
 from sklearn.decomposition import PCA
+from sklearn.cross_validation import train_test_split
 
 def splitListsIntoDummyColumns(df, column):
 	# Get set of unique values in column
@@ -79,6 +80,32 @@ def generateExpansions():
 		expansionData = gameData.find_one({'name': expansionName})
 		if expansionData != None:
 			table.insert_one(expansionData)
+
+def buildUserRatingsSFrame(remove_expansions=True, split_train_test=True):
+	'''
+	SFrames are used by graphlab to create the model
+	First split the user data into training and testing data
+	Then create and return a training and a testing SFrame
+	'''
+	client = MongoClient()
+	db = client['boardGameGeek']
+	table = db['userData']
+
+	df = pd.DataFrame(list(table.find()))
+	columns = ['boardGameId','username','rating']
+
+	if remove_expansions:
+		expansionIds = set(db['expansions'].distinct('id'))
+		df = df[map(lambda x: x not in expansionIds, df['boardGameId'])]
+
+	if split_train_test:
+		df_train, df_test = train_test_split(df[columns])
+		sf_train = graphlab.SFrame(df_train)
+		sf_test = graphlab.SFrame(df_test)
+
+		return sf_train, sf_test
+	else:
+		return graphlab.SFrame(df[columns])
 
 
 if __name__ == '__main__':

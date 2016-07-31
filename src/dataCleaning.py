@@ -58,7 +58,7 @@ def formatBoardGameData(boardGameData):
 	avgRating = getValueIfNotNull(soup.find('ratings average'))
 	bayesAverage = getValueIfNotNull(soup.find('ratings bayesaverage'))
 	rank = getValueIfNotNull(soup.find('ratings ranks rank', type='subtype'))
-
+	
 	global client
 	db = client['boardGameGeek']
 	table = db['formattedGameData']
