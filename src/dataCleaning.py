@@ -9,6 +9,8 @@ from bs4 import BeautifulSoup
 import multiprocessing
 from functools import partial
 
+client = MongoClient()
+
 def formatGameDataParallel(limit=False):
 	'''
 	Loops through all games in 'boardGameData' table
@@ -18,7 +20,7 @@ def formatGameDataParallel(limit=False):
 		playtime, minPlaytime, maxPlaytime, minAge, categories, families, expansions,
 		designers, artists, publishers, avgRating, bayesAverage, rank
 	'''
-	client = MongoClient()
+	global client
 	db = client['boardGameGeek']
 	if limit != False:
 		boardGameData = db['boardGameMetaData'].find().limit(limit)
@@ -57,7 +59,7 @@ def formatBoardGameData(boardGameData):
 	bayesAverage = getValueIfNotNull(soup.find('ratings bayesaverage'))
 	rank = getValueIfNotNull(soup.find('ratings ranks rank', type='subtype'))
 
-	client = MongoClient()
+	global client
 	db = client['boardGameGeek']
 	table = db['formattedGameData']
 
@@ -91,5 +93,4 @@ def getListIfNotNull(searchObject):
 	return '' if searchObject == None else [x['value'] for x in searchObject]
 
 if __name__ == '__main__':
-	formatUserDataParallel()
 	formatGameDataParallel()

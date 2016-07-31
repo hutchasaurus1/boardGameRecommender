@@ -170,8 +170,5 @@ def getBoardGameData(boardGameIds, metaData):
 		print r.status_code
 
 if __name__ == '__main__':
-	# getBoardGameIds()
-	# getUsernames()
-	getUserDataParallel()
-	# getBoardGamesDataParallel()
+	pass
 

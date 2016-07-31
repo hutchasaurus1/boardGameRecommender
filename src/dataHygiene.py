@@ -28,10 +28,10 @@ def uniqueValues(series):
 
 def buildGameFeatureDF(columns='all'):
 	'''
-	Features:
-	 	id, artists, categories, designers, minPlaytime, name, mechanics
-	 	families, maxPlayers, maxPlaytime, minAge, minPlayers
-	 	playtime, publishers, yearPublished
+	This function builds the game features dataframe
+	If all columns are passed for all board games, you are likely to run out of memory
+	Try reducing to column = ['categories','minPlaytime','mechanics','families','maxPlayers','maxPlaytime','minAge','minPlayers','playtime','yearPublished']
+	Then play around from there
 	'''
 	client = MongoClient()
 	db = client['boardGameGeek']
@@ -41,17 +41,17 @@ def buildGameFeatureDF(columns='all'):
 	df['boardGameId'] = df['id']
 
 	# Drop unecessary columns
-	unecessaryColumns = ['_id','id','name','description','avgRating','bayesAverage','rank']
+	unecessaryColumns = ['_id','id','name','description','avgRating','bayesAverage','rank','expansions']
 	df.drop(unecessaryColumns, axis=1, inplace=True)
-	columns = [c for c in columns if c not in unecessaryColumns]
 
 	if columns != 'all':
+		columns = [c for c in columns if c not in unecessaryColumns]
 		if 'boardGameId' not in columns:
 			columns.append('boardGameId')
 		df = df[columns]
 
 	# Build dummy columns
-	columnsOfLists = ['artists','categories','designers','families','publishers', 'mechanics','expansions']
+	columnsOfLists = ['artists','categories','designers','families','publishers','mechanics']
 	for column in columnsOfLists:
 		if column in columns or columns == 'all':
 			df = splitListsIntoDummyColumns(df, column)
@@ -63,16 +63,22 @@ def buildGameFeatureDF(columns='all'):
 			df[column] = pd.to_numeric(df[column])
 
 	# This process takes a while, so save the final df to a csv file
-	df.to_csv('data/gameData.csv')
-	return df
+	df.to_csv('data/gameData.csv', encoding='utf-8')
 
-def dimensionalityReduction(df, n_components=100):
+def generateExpansions():
 	'''
-	Reduce the dimensions of a dataframe to only the n_components that explain the most variance
-	Returns a reduced version of the df as well as explained variance
+	Saves expansion game ids into the database so that they may be ignored in the predictor
 	'''
-	model = PCA(n_components=n_components)
-	return model.fit_transform(df.values)
+	client = MongoClient()
+	db = client['boardGameGeek']
+	table = db['expansions']
+	gameData = db['formattedGameData']
+	expansionNames = gameData.distinct('expansions')
+
+	for expansionName in expansionNames:
+		expansionData = gameData.find_one({'name': expansionName})
+		if expansionData != None:
+			table.insert_one(expansionData)
 
 
 if __name__ == '__main__':

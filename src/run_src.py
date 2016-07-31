@@ -3,6 +3,7 @@ This file runs all relevant functions in src to gather the data, create the mode
 '''
 from gatherData import getBoardGameIds, getUsernames, getUsersData, getBoardGamesMetaData
 from dataCleaning import formatUserDataParallel, formatGameDataParallel
+from pymongo import MongoClient
 
 if __name__ == '__main__':
 	getBoardGameIds()
