@@ -9,5 +9,4 @@ if __name__ == '__main__':
 	getUsernames()
 	getUsersData()
 	getBoardGamesMetaData()
-	formatUserDataParallel()
 	formatGameDataParallel()

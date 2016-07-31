@@ -1,3 +1,6 @@
+'''
+This file contains functions to clean up the messy board game data
+'''
 from __future__ import division
 import pandas as pd
 import numpy as np

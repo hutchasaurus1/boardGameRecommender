@@ -1,3 +1,7 @@
+'''
+This file contains all functions to scrape the data off of boardGameGeek.com
+and save it in MongoDB
+'''
 from __future__ import division
 import requests
 from pymongo import MongoClient
@@ -116,8 +120,8 @@ def formatAndSaveUserData(username, html):
 		tds = row.find_all('td')
 		if len(tds) > 0:
 			boardGameLink = '' if tds[0].find('a') == None else tds[0].find('a')['href'].split('/')
-			boardGameId = boardGameLink[2] if boardGameLink != '' else ''
-			boardGameName = boardGameLink[3] if boardGameLink != '' else ''
+			boardGameId = boardGameLink[2] if boardGameLink != '' and len(boardGameLink) > 3 else ''
+			boardGameName = boardGameLink[3] if boardGameLink != '' and len(boardGameLink) > 3 else ''
 			ratingText = row.find('div', class_='ratingtext')
 			rating = 0 if ratingText == None else float(ratingText.get_text())
 			owned = 0 if row.find('div', class_='owned') == None else 1
@@ -166,8 +170,8 @@ def getBoardGameData(boardGameIds, metaData):
 		print r.status_code
 
 if __name__ == '__main__':
-	getBoardGameIds()
-	getUsernames()
+	# getBoardGameIds()
+	# getUsernames()
 	getUserDataParallel()
-	getBoardGamesDataParallel()
+	# getBoardGamesDataParallel()
 
