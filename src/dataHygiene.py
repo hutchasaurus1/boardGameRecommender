@@ -28,7 +28,7 @@ def uniqueValues(series):
 			values.add(value)
 	return values
 
-def buildGameFeatureDF(columns='all'):
+def buildGameFeatureDF(columns='all', remove_expansions=False):
 	'''
 	This function builds the game features dataframe
 	If all columns are passed for all board games, you are likely to run out of memory
@@ -45,6 +45,10 @@ def buildGameFeatureDF(columns='all'):
 	# Drop unecessary columns
 	unecessaryColumns = ['_id','id','name','description','avgRating','bayesAverage','rank','expansions']
 	df.drop(unecessaryColumns, axis=1, inplace=True)
+
+	if remove_expansions:
+		expansionIds = set(db['expansions'].distinct('id'))
+		df = df[map(lambda x: x not in expansionIds, df['boardGameId'])]
 
 	if columns != 'all':
 		columns = [c for c in columns if c not in unecessaryColumns]

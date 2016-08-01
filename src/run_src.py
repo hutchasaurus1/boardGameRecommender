@@ -4,7 +4,9 @@ This file runs all relevant functions in src to gather the data, create the mode
 from src.gatherData import getBoardGameIds, getUsernames, getUserDataParallel, getBoardGamesDataParallel
 from src.dataCleaning import formatGameDataParallel
 from src.dataHygiene import buildGameFeatureDF, generateExpansions, buildUserRatingsSFrame
-from src.modeling import buildFactrizationModel, pickleModel
+from src.modeling import buildFactorizationModel, pickleModel, getRecommendations
+import pandas as pd
+import graphlab
 
 if __name__ == '__main__':
 	# Gather and clean the data
@@ -15,13 +17,40 @@ if __name__ == '__main__':
 	formatGameDataParallel()
 
 	# Prepare the data for the model
-	columns = ['categories','minPlaytime','mechanics','families','maxPlayers','maxPlaytime','minAge','minPlayers','playtime','yearPublished']
+	columns = ['minPlaytime','mechanics','maxPlayers','maxPlaytime','minAge','minPlayers','playtime','yearPublished']
 	buildGameFeatureDF(columns)
 	generateExpansions()
-	sf_train = buildUserRatingsSFrame(remove_expansions=True, split_train_test=False)
+	sf_train, sf_test = buildUserRatingsSFrame(remove_expansions=False, split_train_test=True)
+
+	# Get best parameters for ranking factorization model
+	grid_search = graphlab.toolkits.model_parameter_search.grid_search.create(
+		(sf_train, sf_test),
+		graphlab.recommender.ranking_factorization_recommender.create,
+		{
+			'user_id': 'username',
+			'item_id': 'boardGameId',
+			'target': 'rating',
+			'num_factors': [10, 50, 100],
+			'regularization': [1e-09, 1e-05],
+			'ranking_regularization': [0.25, .1, .5],
+			'num_sampled_negative_examples': [4, 7, 10]
+		},
+		perform_trial_run=True
+	)
 
 	# Generate and pickle the model
 	gameData = pd.read_csv('data/gameData.csv')
 	gameData = graphlab.SFrame(gameData)
-	model = buildFactrizationModel(sf_train, gameData, user_id='username', item_id='boardGameId', target='rating')
-	pickleModel(model)
+	recommender = buildFactorizationModel(
+		sf_train,
+		item_data=gameData,
+		user_id='username',
+		item_id='boardGameId',
+		target='rating',
+		num_factors=10,
+		num_sampled_negative_examples=4,
+		ranking_regularization=0.001,
+		regularization=1e-12,
+		linear_regularization=1e-12
+	)
+	pickleModel(recommender)

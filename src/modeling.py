@@ -3,16 +3,21 @@ This file contains scripts to build and pickle the model
 '''
 from __future__ import division
 import graphlab
+from pymongo import MongoClient
 import cPickle as pickle
 
-def buildFactrizationModel(data, item_data=None, user_id='username', item_id='boardGameId', target='rating', **kwargs):
-	model = graphlab.recommender.factorization_recommender.create(
+def buildFactorizationModel(data, item_data=None, user_id='username', item_id='boardGameId', target='rating', num_factors=10, num_sampled_negative_examples=4, ranking_regularization=0.001, regularization=1e-12, linear_regularization=1e-12):
+	model = graphlab.recommender.ranking_factorization_recommender.create(
 			observation_data=data,
 			user_id=user_id,
 			item_id=item_id,
 			target=target,
 			item_data=item_data,
-			**kwargs
+			num_factors=10,
+			num_sampled_negative_examples=num_sampled_negative_examples,
+			ranking_regularization=ranking_regularization,
+			regularization=regularization,
+			linear_regularization=linear_regularization
 		)
 
 	return model
@@ -22,6 +27,10 @@ def pickleModel(model):
 		pickle.dump(model, f)
 
 def getRecommendations(model, username):
+	client = MongoClient()
+	db = client['boardGameGeek']
+	boardGames = db['formattedGameData']
+
 	recs = model.recommend([username])
 	recs = list(recs['boardGameId'])
 	recs_list = boardGames.find({'id': {'$in': recs}})
