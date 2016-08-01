@@ -6,7 +6,7 @@ import graphlab
 from pymongo import MongoClient
 import cPickle as pickle
 
-def buildFactorizationModel(data, item_data=None, user_id='username', item_id='boardGameId', target='rating', num_factors=10, num_sampled_negative_examples=4, ranking_regularization=0.001, regularization=1e-12, linear_regularization=1e-12):
+def buildFactorizationModel(data, item_data=None, user_id='username', item_id='boardGameId', target='rating', num_factors=None, num_sampled_negative_examples=4, ranking_regularization=None, regularization=1e-10, linear_regularization=1e-10):
 	model = graphlab.recommender.ranking_factorization_recommender.create(
 			observation_data=data,
 			user_id=user_id,
