@@ -11,6 +11,8 @@ from functools import partial
 import time
 import math
 
+client = MongoClient()
+
 # Functions to get board game ids
 def getBoardGameIds():
 	'''
@@ -34,7 +36,7 @@ def getBoardGamesFromPageN(n, url):
 		saveBoardGameIds(page_ids)
 
 def saveBoardGameIds(ids):
-	client = MongoClient()
+	global client
 	db = client['boardGameGeek']
 	boardGames = db['boardGames']
 	for boardGameId in ids:
@@ -47,20 +49,19 @@ def getUsernames():
 	'''
 	baseUrl = 'https://boardgamegeek.com/users/page/'
 	page = 1
-	parameters = '?country=United+States&state=&city='
 
 	# There are over 13000 pages of users
 	# Set up parallel processing to get them all
 	pool = multiprocessing.Pool(processes=4)
 	page_range = xrange(0,13500)
 	outputs = pool.map(
-		func=partial(getUsernamesFromPageN, baseUrl=baseUrl, parameters=parameters),
+		func=partial(getUsernamesFromPageN, baseUrl=baseUrl),
 		iterable=page_range
 	)
 
-def getUsernamesFromPageN(n, baseUrl, parameters):
+def getUsernamesFromPageN(n, baseUrl):
 	print n
-	r = requests.get(baseUrl + str(n) + parameters)
+	r = requests.get(baseUrl + str(n))
 	if r.status_code == 200:
 		html = r.content
 		soup = BeautifulSoup(html, 'html.parser')
@@ -71,7 +72,7 @@ def saveUsernames(usernames):
 	'''
 	Saves the usernames to MongoDB
 	'''
-	client = MongoClient()
+	global client
 	db = client['boardGameGeek']
 	users = db['users']
 	for username in usernames:
@@ -82,7 +83,7 @@ def getUserDataParallel():
 	Gets the game ratings from each user based on username
 	'''
 	# Get a list of iterable usernames
-	client = MongoClient()
+	global client
 	db = client['boardGameGeek']
 	users = db['users']
 	userData = db['userData']
@@ -111,7 +112,7 @@ def formatAndSaveUserData(username, html):
 	Format the html before saving it in the database
 	'''
 	soup = BeautifulSoup(html, 'html.parser')
-	client = MongoClient()
+	global client
 	db = client['boardGameGeek']
 	table = db['userData']
 
@@ -142,7 +143,7 @@ def getBoardGamesDataParallel():
 	Get the board game meta data for each game based on game id
 	'''
 	# Get a list of iterable board game ids
-	client = MongoClient()
+	global client
 	db = client['boardGameGeek']
 	boardGames = db['boardGames']
 	metaData = db['boardGameMetaData']
