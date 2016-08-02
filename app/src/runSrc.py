@@ -4,7 +4,7 @@ This file runs all relevant functions in src to gather the data, create the mode
 from src.gatherData import getBoardGameIds, getUsernames, getUserDataParallel, getBoardGameData
 from src.dataCleaning import formatGameDataParallel
 from src.dataHygiene import buildGameFeatureDF, generateExpansions, buildUserRatingsSFrame
-from src.modeling import buildFactorizationModel, pickleModel, getRecommendations
+from src.modeling import buildFactorizationModel, getRecommendations
 import pandas as pd
 import graphlab
 
@@ -31,15 +31,14 @@ if __name__ == '__main__':
 			'item_id': 'boardGameId',
 			'target': 'rating',
 			'num_factors': [10, 50, 100],
-			'regularization': [1e-09, 1e-05],
-			'ranking_regularization': [0.25, .1, .5],
 			'num_sampled_negative_examples': [4, 7, 10]
 		},
 		perform_trial_run=True
 	)
 
-	# Generate and pickle the model
+	# Generate and save the model
 	gameData = pd.read_csv('data/gameData.csv')
+	gameData.drop(['Unnamed: 0', 'maxPlayers', 'maxPlaytime', 'minAge', 'minPlayers', 'minPlaytime', 'yearPublished'], axis=1, inplace=True)
 	gameData = graphlab.SFrame(gameData)
 	recommender = buildFactorizationModel(
 		sf_train,
@@ -49,8 +48,8 @@ if __name__ == '__main__':
 		target='rating',
 		num_factors=10,
 		num_sampled_negative_examples=4,
-		ranking_regularization=0.001,
-		regularization=1e-12,
-		linear_regularization=1e-12
+		ranking_regularization=0,
+		regularization=1e-05,
+		linear_regularization=1e-05
 	)
-	pickleModel(recommender)
+	recommender.save('model.pkl')

@@ -5,6 +5,7 @@ from __future__ import division
 import graphlab
 from pymongo import MongoClient
 import cPickle as pickle
+from operator import itemgetter
 
 def buildFactorizationModel(data, item_data=None, user_id='username', item_id='boardGameId', target='rating', num_factors=None, num_sampled_negative_examples=4, ranking_regularization=None, regularization=1e-10, linear_regularization=1e-10):
 	model = graphlab.recommender.ranking_factorization_recommender.create(
@@ -38,9 +39,10 @@ def getRecommendations(model, username, k=10):
 	ranked_recs_with_name =  []
 	for rec in recs_list:
 		rec['rank'] = recs.index(rec['id']) + 1
-		ranked_recs_with_name.append([rec['id'], rec['name'], rec['rank']])
+		url = 'http://www.boardgamegeek.com/boardgame/' + rec['id']
+		ranked_recs_with_name.append([rec['id'], rec['name'], rec['rank'], url])
 
-	return ranked_recs_with_name
+	return sorted(ranked_recs_with_name, key=itemgetter(2))
 
 if __name__ == '__main__':
 	pass
