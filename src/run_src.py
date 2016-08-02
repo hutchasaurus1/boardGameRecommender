@@ -1,7 +1,7 @@
 '''
 This file runs all relevant functions in src to gather the data, create the model, and start the web app
 '''
-from src.gatherData import getBoardGameIds, getUsernames, getUserDataParallel, getBoardGamesDataParallel
+from src.gatherData import getBoardGameIds, getUsernames, getUserDataParallel, getBoardGameData
 from src.dataCleaning import formatGameDataParallel
 from src.dataHygiene import buildGameFeatureDF, generateExpansions, buildUserRatingsSFrame
 from src.modeling import buildFactorizationModel, pickleModel, getRecommendations
@@ -11,10 +11,10 @@ import graphlab
 if __name__ == '__main__':
 	# Gather and clean the data
 	getBoardGameIds()
-	getUsernames()
-	getUserDataParallel()
-	getBoardGamesDataParallel()
-	formatGameDataParallel()
+	getUsernames(16)
+	getUserDataParallel(16)
+	getBoardGameData()
+	formatGameDataParallel(16)
 
 	# Prepare the data for the model
 	columns = ['minPlaytime','mechanics','maxPlayers','maxPlaytime','minAge','minPlayers','playtime','yearPublished']

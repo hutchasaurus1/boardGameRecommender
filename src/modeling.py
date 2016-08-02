@@ -26,12 +26,12 @@ def pickleModel(model):
 	with open("model.pkl") as f:
 		pickle.dump(model, f)
 
-def getRecommendations(model, username):
+def getRecommendations(model, username, k=10):
 	client = MongoClient()
 	db = client['boardGameGeek']
 	boardGames = db['formattedGameData']
 
-	recs = model.recommend([username])
+	recs = model.recommend([username], k=k)
 	recs = list(recs['boardGameId'])
 	recs_list = boardGames.find({'id': {'$in': recs}})
 

@@ -14,7 +14,7 @@ import math
 client = MongoClient()
 
 # Functions to get board game ids
-def getBoardGameIds():
+def getBoardGameIds(n=4):
 	'''
 	Query boardgamegeek.com for all board game ids
 	'''
@@ -22,7 +22,7 @@ def getBoardGameIds():
 
 	# 850 pages of board games
 	# Set up parallel processing to get them all
-	pool = multiprocessing.Pool(processes=4)
+	pool = multiprocessing.Pool(processes=n)
 	page_range = xrange(0,860)
 	outputs = pool.map(func=partial(getBoardGamesFromPageN, url=url), iterable=page_range)
 
@@ -43,7 +43,7 @@ def saveBoardGameIds(ids):
 		db.boardGames.insert({'id': boardGameId})
 
 # Functions to get usernames
-def getUsernames():
+def getUsernames(n=4):
 	'''
 	Get the usernames for each user in the United States from BGG
 	'''
@@ -52,8 +52,8 @@ def getUsernames():
 
 	# There are over 13000 pages of users
 	# Set up parallel processing to get them all
-	pool = multiprocessing.Pool(processes=4)
-	page_range = xrange(0,13500)
+	pool = multiprocessing.Pool(processes=n)
+	page_range = xrange(0,52696)
 	outputs = pool.map(
 		func=partial(getUsernamesFromPageN, baseUrl=baseUrl),
 		iterable=page_range
@@ -76,9 +76,9 @@ def saveUsernames(usernames):
 	db = client['boardGameGeek']
 	users = db['users']
 	for username in usernames:
-		db.users.insert({'username': username})
+		db.users.insert_one({'username': username})
 
-def getUserDataParallel():
+def getUserDataParallel(n=4):
 	'''
 	Gets the game ratings from each user based on username
 	'''
@@ -87,14 +87,25 @@ def getUserDataParallel():
 	db = client['boardGameGeek']
 	users = db['users']
 	userData = db['userData']
-	usernames = users.distinct('username')
-	userDataNames = set(userData.distinct('username'))
-	usernames = [username for username in usernames if username not in userDataNames]
+
+	# Get all usernames we haven't looped over
+	users = users.find()
+	usernames = set()
+	for user in users:
+		usernames.add(user['username'])
+
+	# Ensure we haven't gotten the data yet
+	alreadyGathered = set()
+	userData = userData.find()
+	for user in userData:
+		alreadyGathered.add(user['username'])
+
+	usernames = [username for username in usernames if username not in alreadyGathered]
 	iterable = enumerate(usernames)
 
-	# There are over 300000 users
+	# There are over 1300000 users
 	# Set up parallel processing to get all of their game data
-	pool = multiprocessing.Pool(processes=4)
+	pool = multiprocessing.Pool(processes=n)
 	outputs = pool.map(func=getUserData, iterable=iterable)
 
 def getUserData(username):
@@ -138,7 +149,7 @@ def formatAndSaveUserData(username, html):
 					'comment': comment
 				})
 
-def getBoardGamesDataParallel():
+def getBoardGameData():
 	'''
 	Get the board game meta data for each game based on game id
 	'''
@@ -155,9 +166,9 @@ def getBoardGamesDataParallel():
 	for i in range(int(math.ceil(l / 100))):
 		time.sleep(5)
 		boardGameIdsString = ','.join(boardGameIds[i * 100: min(l - 1,(i + 1) * 100)])
-		getBoardGameData(boardGameIdsString, metaData)
+		saveBoardGameData(boardGameIdsString, metaData)
 
-def getBoardGameData(boardGameIds, metaData):
+def saveBoardGameData(boardGameIds, metaData):
 	url = 'http://www.boardgamegeek.com/xmlapi2/thing?id=' + boardGameIds + '&stats=1'
 	r = requests.get(url)
 	if r.status_code == 200:

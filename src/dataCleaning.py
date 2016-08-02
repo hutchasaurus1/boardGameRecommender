@@ -11,7 +11,7 @@ from functools import partial
 
 client = MongoClient()
 
-def formatGameDataParallel(limit=False):
+def formatGameDataParallel(n=4, limit=False):
 	'''
 	Loops through all games in 'boardGameData' table
 	Parses content included in xml content.
@@ -27,7 +27,7 @@ def formatGameDataParallel(limit=False):
 	else:
 		boardGameData = db['boardGameMetaData'].find()
 
-	pool = multiprocessing.Pool(processes=4)
+	pool = multiprocessing.Pool(processes=n)
 	outputs = pool.map(func=formatBoardGameData, iterable=boardGameData)
 
 def formatBoardGameData(boardGameData):
@@ -58,7 +58,7 @@ def formatBoardGameData(boardGameData):
 	avgRating = getValueIfNotNull(soup.find('ratings average'))
 	bayesAverage = getValueIfNotNull(soup.find('ratings bayesaverage'))
 	rank = getValueIfNotNull(soup.find('ratings ranks rank', type='subtype'))
-	
+
 	global client
 	db = client['boardGameGeek']
 	table = db['formattedGameData']
