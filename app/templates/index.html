@@ -16,17 +16,11 @@
 
     <!-- Custom CSS -->
     <link href="static/css/recommender.css" rel="stylesheet">
+    <link href="//code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" rel="Stylesheet"></link>
 
     <!-- Fonts -->
     <link href="http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
     <link href="http://fonts.googleapis.com/css?family=Josefin+Slab:100,300,400,600,700,100italic,300italic,400italic,600italic,700italic" rel="stylesheet" type="text/css">
-
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
 
 </head>
 
@@ -67,30 +61,85 @@
         <!-- /.container -->
     </nav>
 
+    <!-- Get recommendations by username -->
     <div class="container">
-
         <div class="row">
             <div class="box">
                 <div class="col-lg-12">
                     <p class="intro-text text-center">Get a recommendation</p>
                     <hr>
-                    <!-- <img class="img-responsive img-border img-left" src="static/img/intro-pic.jpg" alt=""> -->
-                    <p>Insert your board game geek username to get recommendations. If your username doesn't exist, you will be given the default recommendations</p>
                     <form action="index" method="GET">
-                        <div class="form-group col-lg-4">
+                        <div class="form-group col-lg-6">
+                            <p>Insert your board game geek username to get recommendations. If your username doesn't exist, you will be given the default recommendations</p>
                             <label>Board Game Geek Username</label>
-                            <input type="text" name="username" class="form-control">
-                            <button type="submit" class="btn btn-default">Submit</button>
+                            <input type="text" name="username" class="form-control"></input>
+                            <input type="submit" class="btn btn-default"></input>
+                        </div>
+                        <div class="col-md-6">
+                            <img class="img-responsive img-border-left" src="static/img/boardGameGeekLogo.png" alt="">
                         </div>
                     </form>
-                    {% if recs %}
+                </div>
+                {% if recs %}
+                    <div>
+                        <table cellspacing="10">
+                            <tr>
+                                <th>Name</th>
+                                <th>Rank</th>
+                            </tr>
+                            {% for rec in recs %}
+                                <tr>
+                                    <td><a href={{ rec[3] }}>{{ rec[1] }}</a></td>
+                                    <td>{{ rec[2] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Autocomplete to generate recommendataions -->
+    <div class="container">
+        <div class="row">
+            <div class="box">
+                <div class="col-lg-12">
+                    <p class="intro-text text-center">Get a recommendation</p>
+                    <hr>
+                    <div class="col-lg-6">
+                        <form action="addGame" method="GET">
+                            <div class="form-group">
+                                <p>Select at least 5 games you like, then get a recommendation</p>
+                                <label>Board Game</label>
+                                <input type="text" name="boardGameName" id="autocomplete" class="add-game-field form-control">
+                                <input type="hidden" id="board-game-names" value='' />                  
+                            </div>
+                        </form>
+                        <form action="index" method="GET">
+                            <div class="">
+                                <input type="text" name="newRecs" class="hidden" value="True">
+                                <input type="submit" class="btn btn-default" value="Get Recommendations"></input>
+                            </div>
+                        </form>
                         <div>
+                            <ul id="liked-games">
+                                {% if likedGames %}
+                                    {% for game in likedGames %}
+                                        <li class='remove-on-click'>X {{ game }}<li>
+                                    {% endfor %}
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% if newRecs %}
+                        <div class="col-lg-6">
                             <table cellspacing="10">
                                 <tr>
                                     <th>Name</th>
                                     <th>Rank</th>
                                 </tr>
-                                {% for rec in recs %}
+                                {% for rec in newRecs %}
                                     <tr>
                                         <td><a href={{ rec[3] }}>{{ rec[1] }}</a></td>
                                         <td>{{ rec[2] }}</td>
@@ -103,13 +152,12 @@
             </div>
         </div>
     </div>
-    <!-- /.container -->
 
     <footer>
         <div class="container">
             <div class="row">
                 <div class="col-lg-12 text-center">
-                    <p>Copyright &copy; Your Website 2014</p>
+                    <!-- <p>Copyright &copy; Your Website 2014</p> -->
                 </div>
             </div>
         </div>
@@ -117,15 +165,56 @@
 
     <!-- jQuery -->
     <script src="static/js/jquery.js"></script>
+    <script src="//code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script src="//code.jquery.com/ui/1.10.2/jquery-ui.js" ></script>
 
     <!-- Bootstrap Core JavaScript -->
     <script src="static/js/bootstrap.min.js"></script>
 
     <!-- Script to Activate the Carousel -->
     <script>
-    $('.carousel').carousel({
-        interval: 5000 //changes the speed
-    })
+        $(function() {
+
+            // Auto complete for adding board games
+            $("#autocomplete").autocomplete({
+                source: function(request, response) {
+                    $.getJSON("{{url_for('autocomplete')}}",{
+                        q: request.term
+                    }, function(data) {
+                        response(data.json_list)
+                    });
+                },
+                minLength: 2,
+                maxLength: 5,
+
+                // Update liked games when a game is selected
+                select: function(e, ui) {
+                    $(this).val("");
+                    e.preventDefault();
+                    $.ajax({
+                        type: "GET",
+                        url: "/addGame",
+                        data: "gameName=" + ui.item.value,
+                        success: function(result) {
+                            $("#liked-games").empty();
+                            $.each(result.likedGames, function(key, val) {
+                                $("#liked-games").append("<li class='remove-on-click'>X " + val + "</li>")
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Functionality to remove games from session variable on click of game
+            $("#liked-games").on("click", ".remove-on-click", function(e) {
+                $.ajax({
+                    type: "GET",
+                    url: "/removeGame",
+                    data: "gameName=" + $(this).html().substring(2)
+                });
+                $(this).remove();
+            });
+        });
     </script>
 
 </body>

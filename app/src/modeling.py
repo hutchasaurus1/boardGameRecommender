@@ -23,16 +23,12 @@ def buildFactorizationModel(data, item_data=None, user_id='username', item_id='b
 
 	return model
 
-def pickleModel(model):
-	with open("model.pkl") as f:
-		pickle.dump(model, f)
-
-def getRecommendations(model, username, k=10):
+def getRecommendations(model, username, k=10, new_observation_data=None):
 	client = MongoClient()
 	db = client['boardGameGeek']
 	boardGames = db['formattedGameData']
 
-	recs = model.recommend([username], k=k)
+	recs = model.recommend([username], k=k, new_observation_data=new_observation_data)
 	recs = list(recs['boardGameId'])
 	recs_list = boardGames.find({'id': {'$in': recs}})
 
