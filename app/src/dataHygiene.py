@@ -7,39 +7,23 @@ from pymongo import MongoClient
 import numpy as np
 from sklearn.cross_validation import train_test_split
 import graphlab
-import gc
+import csv
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
 
-def splitListsIntoDummyColumns(df, column):
-	# Get set of unique values in column
-	uniqueVals = uniqueValues(df[column])
-
-	# Add a column to the dataframe for each unique value
-	for value in uniqueVals:
-		df[value] = map(lambda x: 1 if value in x else 0, df[column])
-
-	df.drop(column, axis=1, inplace=True)
-
-	# Release unused memory
-	gc.collect()
-	return df
-
-def uniqueValues(series):
+def getDummyColumnNames(series, columnName):
 	# Return the unique values from a series of lists
 	values = set()
 	for l in series:
 		for value in l:
-			values.add(value)
+			values.add(columnName + '_' + value)
 
-	# Release unused memory
-	gc.collect()
 	return values
 
 def buildGameFeatureDF(columns='all', remove_expansions=False):
 	'''
 	This function builds the game features dataframe
-	If all columns are passed for all board games, you are likely to run out of memory
-	Try reducing to column = ['categories','minPlaytime','mechanics','families','maxPlayers','maxPlaytime','minAge','minPlayers','playtime','yearPublished']
-	Then play around from there
 	'''
 	client = MongoClient()
 	db = client['boardGameGeek']
@@ -61,21 +45,45 @@ def buildGameFeatureDF(columns='all', remove_expansions=False):
 		if 'boardGameId' not in columns:
 			columns.append('boardGameId')
 		df = df[columns]
-
-	# Build dummy columns
-	columnsOfLists = ['artists','categories','designers','families','publishers','mechanics']
-	for column in columnsOfLists:
-		if column in columns or columns == 'all':
-			df = splitListsIntoDummyColumns(df, column)
+	else:
+		columns = df.columns
 
 	# Change necessary columns to numeric
 	columnsToNumeric = ['maxPlayers','maxPlaytime','minAge','minPlayers','minPlaytime']
 	for column in columnsToNumeric:
-		if column in columns or columns == 'all':
+		if column in df.columns:
 			df[column] = pd.to_numeric(df[column])
 
-	# This process takes a while, so save the final df to a csv file
-	df.to_csv('data/gameData.csv', encoding='utf-8')
+	# Grab list of columns for dummy columns
+	dummyColumns = []
+	columnsOfLists = ['artists','categories','designers','families','publishers','mechanics']
+	for column in columnsOfLists:
+		if column in df.columns:
+			dummyColumns.extend(getDummyColumnNames(df[column], column))
+
+	allColumns = list(df.columns) + dummyColumns
+
+	# Write to the csv one line at a time
+	with open('data/gameData.csv', 'w') as csvFile:
+		writer = csv.writer(csvFile)
+		writer.writerow(allColumns)
+
+		for _, row in df.iterrows():
+			# Build row to write into csv by generating all dummy column data
+			new_row = []
+			i = 0
+			for column in allColumns:
+				c = column.split("_", 1)
+				if len(c) == 1:
+					new_row.append(row[column])
+				else:
+					# Calculate dummy column values
+					if c[1] in row[c[0]]:
+						new_row.append(1)
+					else:
+						new_row.append(0)
+
+			writer.writerow(new_row)
 
 def generateExpansions():
 	'''
