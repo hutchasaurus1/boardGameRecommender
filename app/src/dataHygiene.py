@@ -5,9 +5,9 @@ from __future__ import division
 import pandas as pd
 from pymongo import MongoClient
 import numpy as np
-from sklearn.decomposition import PCA
 from sklearn.cross_validation import train_test_split
 import graphlab
+import gc
 
 def splitListsIntoDummyColumns(df, column):
 	# Get set of unique values in column
@@ -18,6 +18,9 @@ def splitListsIntoDummyColumns(df, column):
 		df[value] = map(lambda x: 1 if value in x else 0, df[column])
 
 	df.drop(column, axis=1, inplace=True)
+
+	# Release unused memory
+	gc.collect()
 	return df
 
 def uniqueValues(series):
@@ -26,6 +29,9 @@ def uniqueValues(series):
 	for l in series:
 		for value in l:
 			values.add(value)
+
+	# Release unused memory
+	gc.collect()
 	return values
 
 def buildGameFeatureDF(columns='all', remove_expansions=False):
