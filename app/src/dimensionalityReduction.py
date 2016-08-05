@@ -34,4 +34,4 @@ def reduceDimensionality(n_components=100):
 	W = model.fit_transform(arr)
 	W = np.insert(W, 0, boardGameIds, axis=1)
 
-	return W
+	np.savetxt("data/reducedGameFeatures.csv", W, delimiter=",")
