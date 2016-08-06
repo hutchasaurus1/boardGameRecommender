@@ -13,16 +13,16 @@ def reduceDimensionality(n_components=100):
 	df = pd.read_csv('data/gameData.csv')
 
 	# Normalize the numeric columns to values in [0,1]
-	numericColumns = ['maxPlayers','maxPlaytime','minAge','minPlayers','minPlaytime']
+	numericColumns = ['maxPlayers','maxPlaytime','minAge','minPlayers','minPlaytime','playtime']
 	colsToNormalize = []
 	for col in numericColumns:
 		if col in df.columns:
 			colsToNormalize.append(col)
 
-	df[colsToNormalize] = df[colsToNormalize].apply(lambda x: ((x - x.mean())/(x.max() - x.min()) + 1)/2)
+	df[colsToNormalize] = df[colsToNormalize].apply(lambda x: (x - x.min())/(x.max() - x.min())/2)
 
 	# Drop string columns
-	colsToDrop = ['artists','categories','designers','families','publishers','mechanics','boardGameId']
+	colsToDrop = ['artists','categories','designers','families','publishers','mechanics','boardGameId','yearPublished']
 
 	# Convert df to an array for NMF and stor the board game id column to attach later
 	boardGameIds = df['boardGameId']
