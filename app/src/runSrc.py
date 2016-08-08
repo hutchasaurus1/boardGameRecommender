@@ -4,6 +4,7 @@ This file runs all relevant functions in src to gather the data, create the mode
 from src.gatherData import getBoardGameIds, getUsernames, getUserDataParallel, getBoardGameData
 from src.dataCleaning import formatGameDataParallel
 from src.dataHygiene import buildGameFeatureDF, generateExpansions, buildUserRatingsSFrame
+from src.dimensionalityReduction import reduceDimensionality
 from src.modeling import buildFactorizationModel, getRecommendations
 import pandas as pd
 import graphlab
@@ -17,7 +18,7 @@ if __name__ == '__main__':
 	formatGameDataParallel(16)
 
 	# Prepare the data for the model
-	columns = ['mechanics','categories','families']
+	columns = ['mechanics','categories','families','maxPlayers','maxPlaytime','minAge','minPlayers','minPlaytime']
 	buildGameFeatureDF(columns)
 	generateExpansions()
 	sf_train, sf_test = buildUserRatingsSFrame(remove_expansions=False, split_train_test=True)
@@ -38,20 +39,21 @@ if __name__ == '__main__':
 	)
 
 	# Generate and save the model
-	gameData = pd.read_csv('data/gameData.csv')
-	gameData.drop(['Unnamed: 0'], axis=1, inplace=True)
-	gameData = graphlab.SFrame(gameData)
+	gameData = graphlab.SFrame.read_csv('data/reducedGameFeatures.csv', header=False)
+	gameData.rename('X1': 'boardGameId')
+	gameData['boardGameId'] = gameData['boardGameId'].apply(lambda x: str(int(x)))
 	recommender = buildFactorizationModel(
 		sf_train,
 		item_data=gameData,
 		user_id='username',
-		item_id='boardGameId',
+		# Column name of board games is X1 by default
+		item_id='X1',
 		target='rating',
 		num_factors=10,
 		num_sampled_negative_examples=4,
 		ranking_regularization=0,
 		regularization=1e-05,
-		linear_regularization=1e-12
+		linear_regularization=1e-05
 	)
 	recommender.save('model')
 
